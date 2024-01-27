@@ -16,6 +16,11 @@ class Author(db.Model):
     def validate_name(self, key, name):
         if not name:
             raise ValueError("Author must have a name")
+
+        # Check if there is another author with the same name
+        #if db.session.query(db.exists().where(Author.name == name and Author.id != self.id)):
+            #raise ValueError("Two different authors cannot have the same name")
+
         return name
 
     @validates('phone_number')
@@ -44,9 +49,11 @@ class Post(db.Model):
         if not title:
             raise ValueError("Post must have a title")
 
-        # Check if there is another author with the same name
-        # if db.session.query(db.exists().where(Author.name == name and Author.id != self.id)):
-            # raise ValueError("Two different authors cannot have the same name")
+        # Custom validator for clickbait-y titles
+        clickbait_phrases = ["Won't Believe", "Secret", "Top", "Guess"]
+        if not any(phrase in title for phrase in clickbait_phrases):
+            raise ValueError("Title must be sufficiently clickbait-y")
+        
         return title
 
     @validates('content')
@@ -61,11 +68,13 @@ class Post(db.Model):
             raise ValueError("Post summary must be a maximum of 250 characters")
         return summary
 
-    @validates('Category')
+    @validates('category')
     def validate_category(self, key, category):
-        if category is not ['Fiction', 'Non-Fiction']:
-            raise ValueError("Post category must be either Fiction or Non-Fiction")
+        choices = ['Fiction', 'Non-Fiction']
+        if category not in choices:
+            raise ValueError("Post category should be either Fiction or Non-Fiction")
         return category
+
 
     def __repr__(self):
         return f'Post(id={self.id}, title={self.title} content={self.content}, summary={self.summary})'
